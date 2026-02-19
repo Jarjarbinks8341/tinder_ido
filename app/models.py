@@ -37,10 +37,30 @@ class User(Base):
     name = Column(String(100), nullable=False)
     gender = Column(Enum(GenderEnum), nullable=False)
     age = Column(Integer, nullable=False)
+    location = Column(String(200), nullable=True)
+    bio = Column(Text, nullable=True)
+    tags = Column(Text, nullable=True)  # comma-separated
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
 
     swipes = relationship("Swipe", back_populates="user", cascade="all, delete-orphan")
     agent = relationship("Agent", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    photos = relationship("UserPhoto", back_populates="user", cascade="all, delete-orphan", order_by="UserPhoto.display_order")
+
+
+class UserPhoto(Base):
+    __tablename__ = "user_photos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    filename = Column(String(255), nullable=False)
+    display_order = Column(Integer, default=0)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="photos")
+
+    @property
+    def url(self) -> str:
+        return f"/uploads/{self.filename}"
 
 
 class Candidate(Base):

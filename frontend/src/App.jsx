@@ -3,6 +3,7 @@ import AuthPage from './pages/AuthPage'
 import BrowsePage from './pages/BrowsePage'
 import HistoryPage from './pages/HistoryPage'
 import AgentPage from './pages/AgentPage'
+import ProfilePage from './pages/ProfilePage'
 import NavBar from './components/NavBar'
 
 function PrivateRoute({ children }) {
@@ -38,6 +39,15 @@ export default function App() {
             <PrivateRoute>
               <NavBar />
               <AgentPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <NavBar />
+              <ProfilePage />
             </PrivateRoute>
           }
         />

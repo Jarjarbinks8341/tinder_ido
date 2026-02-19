@@ -52,4 +52,30 @@ export const api = {
   getSwipeHistory: () => request('GET', '/swipes'),
   getAgent: () => request('GET', '/agent/me'),
   getMatchmakers: () => request('GET', '/matchmaker'),
+
+  updateProfile: (data) => request('PATCH', '/users/me', data),
+
+  uploadPhotos: (files) => {
+    const formData = new FormData()
+    for (const file of files) {
+      formData.append('files', file)
+    }
+    return fetch(`${BASE}/users/me/photos`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${getToken()}` },
+      body: formData,
+    }).then(async (r) => {
+      if (!r.ok) throw new Error((await r.json()).detail || 'Upload failed')
+      return r.json()
+    })
+  },
+
+  deletePhoto: (photoId) =>
+    fetch(`${BASE}/users/me/photos/${photoId}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    }).then(async (r) => {
+      if (!r.ok) throw new Error((await r.json()).detail || 'Delete failed')
+      return r.json()
+    }),
 }

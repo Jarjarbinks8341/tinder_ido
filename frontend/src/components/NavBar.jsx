@@ -25,6 +25,7 @@ export default function NavBar() {
         <NavLink to="/browse" className={linkClass}>Browse</NavLink>
         <NavLink to="/history" className={linkClass}>History</NavLink>
         <NavLink to="/agent" className={linkClass}>Agent</NavLink>
+        <NavLink to="/profile" className={linkClass}>Profile</NavLink>
         <button
           onClick={logout}
           className="ml-4 px-3 py-1 text-sm text-gray-500 hover:text-red-500 transition-colors"

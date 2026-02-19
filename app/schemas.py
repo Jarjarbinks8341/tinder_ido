@@ -14,6 +14,9 @@ class UserRegisterRequest(BaseModel):
     name: str
     gender: GenderEnum
     age: int
+    location: Optional[str] = None
+    bio: Optional[str] = None
+    tags: Optional[str] = None
 
     @field_validator("age")
     @classmethod
@@ -40,6 +43,14 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class UserPhotoResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    url: str
+    display_order: int
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -48,7 +59,17 @@ class UserResponse(BaseModel):
     name: str
     gender: GenderEnum
     age: int
+    location: Optional[str] = None
+    bio: Optional[str] = None
+    tags: Optional[str] = None
+    photos: list[UserPhotoResponse] = []
     created_at: datetime
+
+
+class UserUpdateRequest(BaseModel):
+    location: Optional[str] = None
+    bio: Optional[str] = None
+    tags: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

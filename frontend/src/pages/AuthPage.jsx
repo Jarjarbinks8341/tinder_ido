@@ -10,6 +10,7 @@ export default function AuthPage() {
 
   const [form, setForm] = useState({
     email: '', password: '', name: '', gender: 'male', age: '',
+    location: '', bio: '', tags: '',
   })
 
   function set(field) {
@@ -21,14 +22,19 @@ export default function AuthPage() {
     setError('')
     setLoading(true)
     try {
-      if (mode === 'register') {
-        await api.register({ ...form, age: Number(form.age) })
+      const isRegister = mode === 'register'
+      if (isRegister) {
+        const payload = { ...form, age: Number(form.age) }
+        if (!payload.location) delete payload.location
+        if (!payload.bio) delete payload.bio
+        if (!payload.tags) delete payload.tags
+        await api.register(payload)
       }
       const { access_token } = await api.login(form.email, form.password)
       localStorage.setItem('token', access_token)
       const me = await api.getMe()
       localStorage.setItem('gender', me.gender)
-      navigate('/browse')
+      navigate(isRegister ? '/profile' : '/browse')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -82,6 +88,25 @@ export default function AuthPage() {
                   required
                 />
               </div>
+              <input
+                className={inputClass}
+                placeholder="Location (optional)"
+                value={form.location}
+                onChange={set('location')}
+              />
+              <textarea
+                className={inputClass}
+                placeholder="Bio (optional)"
+                rows={2}
+                value={form.bio}
+                onChange={set('bio')}
+              />
+              <input
+                className={inputClass}
+                placeholder="Interests, comma-separated (optional)"
+                value={form.tags}
+                onChange={set('tags')}
+              />
             </>
           )}
           <input

@@ -23,6 +23,9 @@ def register(payload: schemas.UserRegisterRequest, db: Session = Depends(get_db)
         name=payload.name,
         gender=payload.gender,
         age=payload.age,
+        location=payload.location,
+        bio=payload.bio,
+        tags=payload.tags,
     )
     db.add(user)
     db.flush()  # get user.id before creating Agent
