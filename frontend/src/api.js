@@ -45,6 +45,7 @@ export const api = {
       return r.json()
     }),
 
+  getMe: () => request('GET', '/auth/me'),
   searchCandidates: (filters) => request('POST', '/candidates/search', filters),
   swipe: (candidateId, direction) =>
     request('POST', `/swipes/${candidateId}`, { direction }),

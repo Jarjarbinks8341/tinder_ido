@@ -5,6 +5,7 @@ export default function NavBar() {
 
   function logout() {
     localStorage.removeItem('token')
+    localStorage.removeItem('gender')
     navigate('/')
   }
 

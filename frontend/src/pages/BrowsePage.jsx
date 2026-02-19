@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react'
 import { api } from '../api'
 import CandidateCard from '../components/CandidateCard'
 
-const GENDERS = [
-  { value: '', label: 'Any' },
-  { value: 'female', label: 'Women' },
-  { value: 'male', label: 'Men' },
-  { value: 'other', label: 'Other' },
-]
+const OPPOSITE = { male: 'female', female: 'male', other: 'other' }
+
+function getOppositeGender() {
+  const myGender = localStorage.getItem('gender') || 'male'
+  return OPPOSITE[myGender] ?? 'female'
+}
 
 export default function BrowsePage() {
+  const oppositeGender = getOppositeGender()
+
   const [candidates, setCandidates] = useState([])
   const [index, setIndex] = useState(0)
   const [swiping, setSwiping] = useState(false)
@@ -17,8 +19,7 @@ export default function BrowsePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  // Filters
-  const [gender, setGender] = useState('')
+  // Age and tag filters only — gender is fixed to opposite
   const [minAge, setMinAge] = useState('')
   const [maxAge, setMaxAge] = useState('')
   const [tagInput, setTagInput] = useState('')
@@ -28,8 +29,7 @@ export default function BrowsePage() {
     setError('')
     setIndex(0)
     try {
-      const filters = {}
-      if (gender) filters.gender = gender
+      const filters = { gender: oppositeGender }
       if (minAge) filters.min_age = Number(minAge)
       if (maxAge) filters.max_age = Number(maxAge)
       if (tagInput.trim()) filters.tags = tagInput.split(',').map((t) => t.trim()).filter(Boolean)
@@ -68,6 +68,7 @@ export default function BrowsePage() {
 
   const current = candidates[index]
   const remaining = candidates.length - index
+  const genderLabel = oppositeGender.charAt(0).toUpperCase() + oppositeGender.slice(1) + 's'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -75,21 +76,11 @@ export default function BrowsePage() {
 
         {/* Filters */}
         <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Filters</h2>
-          <div className="flex flex-wrap gap-2">
-            {GENDERS.map((g) => (
-              <button
-                key={g.value}
-                onClick={() => setGender(g.value)}
-                className={`px-3 py-1 rounded-full text-sm font-medium border transition-colors ${
-                  gender === g.value
-                    ? 'bg-rose-500 text-white border-rose-500'
-                    : 'text-gray-500 border-gray-200 hover:border-rose-300'
-                }`}
-              >
-                {g.label}
-              </button>
-            ))}
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Filters</h2>
+            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-rose-50 text-rose-500">
+              Showing: {genderLabel}
+            </span>
           </div>
           <div className="flex gap-2">
             <input
@@ -135,7 +126,7 @@ export default function BrowsePage() {
             <div className="text-center py-20 space-y-2">
               <p className="text-4xl">🎉</p>
               <p className="text-gray-500 font-medium">
-                {candidates.length === 0 ? 'No results. Try different filters.' : 'You\'ve seen everyone!'}
+                {candidates.length === 0 ? 'No results. Try different filters.' : "You've seen everyone!"}
               </p>
               <button onClick={search} className="text-rose-500 text-sm hover:underline">
                 Search again

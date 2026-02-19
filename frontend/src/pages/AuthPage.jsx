@@ -26,6 +26,8 @@ export default function AuthPage() {
       }
       const { access_token } = await api.login(form.email, form.password)
       localStorage.setItem('token', access_token)
+      const me = await api.getMe()
+      localStorage.setItem('gender', me.gender)
       navigate('/browse')
     } catch (err) {
       setError(err.message)

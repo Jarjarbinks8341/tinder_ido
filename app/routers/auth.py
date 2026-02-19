@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 from app import models, schemas, auth
-from app.dependencies import get_db
+from app.dependencies import get_db, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -51,3 +51,8 @@ def login(payload: schemas.UserLoginRequest, db: Session = Depends(get_db)):
 
     token = auth.create_access_token(user.id)
     return schemas.TokenResponse(access_token=token)
+
+
+@router.get("/me", response_model=schemas.UserResponse)
+def get_me(current_user: models.User = Depends(get_current_user)):
+    return current_user
