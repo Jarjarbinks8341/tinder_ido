@@ -123,3 +123,30 @@ class TestCandidateSearch:
                            json={"min_age": 10},
                            headers=auth_headers(token))
         assert resp.status_code == 422
+
+    def test_search_excludes_already_swiped(self, client, db):
+        c1 = seed_candidate(db, name="Alice", gender="female", age=26)
+        c2 = seed_candidate(db, name="Bob", gender="male", age=28)
+        token = self._token(client)
+
+        # Swipe on Alice
+        client.post(f"/swipes/{c1.id}", json={"direction": "right"}, headers=auth_headers(token))
+
+        # Alice should no longer appear in search results
+        resp = client.post("/candidates/search", json={}, headers=auth_headers(token))
+        assert resp.status_code == 200
+        names = {r["name"] for r in resp.json()}
+        assert "Alice" not in names
+        assert "Bob" in names
+
+    def test_search_excludes_left_swiped_too(self, client, db):
+        c1 = seed_candidate(db, name="Alice", gender="female", age=26)
+        seed_candidate(db, name="Bob", gender="male", age=28)
+        token = self._token(client)
+
+        # Left-swipe on Alice — should still be hidden from search
+        client.post(f"/swipes/{c1.id}", json={"direction": "left"}, headers=auth_headers(token))
+
+        resp = client.post("/candidates/search", json={}, headers=auth_headers(token))
+        names = {r["name"] for r in resp.json()}
+        assert "Alice" not in names

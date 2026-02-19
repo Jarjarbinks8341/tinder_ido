@@ -14,7 +14,14 @@ def search_candidates(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    stmt = select(models.Candidate)
+    # Subquery: candidate IDs the user has already swiped on
+    already_swiped = select(models.Swipe.candidate_id).where(
+        models.Swipe.user_id == current_user.id
+    )
+
+    stmt = select(models.Candidate).where(
+        models.Candidate.id.not_in(already_swiped)
+    )
 
     if filters.gender is not None:
         stmt = stmt.where(models.Candidate.gender == filters.gender)
