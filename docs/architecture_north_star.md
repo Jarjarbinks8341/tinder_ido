@@ -135,4 +135,86 @@ A pragmatic product-technical trade-off: implement a **30 or 60-day Time-To-Live
 | Geospatial search | Not implemented | ElasticSearch + CDC from Postgres |
 | Notifications | Not implemented | APNs / FCM async dispatch |
 | Swipe TTL | Not implemented | 30–60 day TTL on swipe records |
+| Photo storage | Local filesystem (`uploads/`) | S3-compatible object storage |
 | Scale target | ~10 users (local dev) | 10M DAU, 1B swipes/day |
+
+---
+
+## Next Step: Migrate Photo Storage to S3
+
+### Problem with the current approach
+
+Photos are currently written to the local `uploads/` directory and served via FastAPI `StaticFiles`. This breaks in any multi-server or containerised deployment because:
+
+- Files only exist on the machine that received the upload request
+- Ephemeral container filesystems (Docker, ECS, Lambda) lose files on restart
+- No redundancy or geographic distribution
+
+### Target architecture
+
+```
+Client → POST /users/me/photos (multipart)
+           │
+           ▼
+     FastAPI backend
+           │  streams bytes
+           ▼
+   S3-compatible bucket  ──► CDN (CloudFront / R2)
+           │                        │
+           │  stores URL            │  serves file globally
+           ▼                        ▼
+      user_photos.url          <img src="https://cdn.example.com/user_1_abc.jpg">
+```
+
+The database stores only the **public URL** returned by S3 — not the filename or any local path.
+
+### Implementation plan
+
+**Backend (`app/routers/users.py`)**
+
+1. Install `boto3` (AWS) or `boto3`-compatible client for Cloudflare R2 / GCS.
+2. Replace the `open(path, "wb")` file-write block with an S3 `put_object` call:
+   ```python
+   import boto3
+   s3 = boto3.client("s3", region_name=S3_REGION)
+
+   s3.put_object(
+       Bucket=S3_BUCKET,
+       Key=f"photos/{filename}",
+       Body=content,
+       ContentType=file.content_type,
+   )
+   url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/photos/{filename}"
+   ```
+3. Store `url` directly on `UserPhoto.url` (change column from `filename` to `url VARCHAR(500)`).
+4. Delete: call `s3.delete_object(Bucket=S3_BUCKET, Key=key)` instead of `os.remove`.
+5. Remove the `StaticFiles` mount and `uploads/` directory entirely.
+
+**Model change (`app/models.py`)**
+
+```python
+class UserPhoto(Base):
+    __tablename__ = "user_photos"
+    id            = Column(Integer, primary_key=True)
+    user_id       = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
+    url           = Column(String(500), nullable=False)   # full S3/CDN URL
+    display_order = Column(Integer, default=0)
+    created_at    = Column(DateTime, server_default=func.now())
+```
+
+**Config (`app/config.py` or environment variables)**
+
+```
+S3_BUCKET=my-tinder-ido-photos
+S3_REGION=us-east-1
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+```
+
+**CDN (optional but recommended)**
+
+Place CloudFront (AWS) or Cloudflare in front of the bucket so images are cached at the edge globally, reducing latency and S3 egress costs.
+
+**Recommended provider for early-stage**
+
+Cloudflare R2 is S3-compatible with zero egress fees — a cost-effective choice before traffic justifies a full AWS setup.
