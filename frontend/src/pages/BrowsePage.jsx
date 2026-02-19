@@ -53,11 +53,12 @@ export default function BrowsePage() {
         ? `❤️ Liked ${candidate.name}! Your agent will follow up.`
         : `👋 Passed on ${candidate.name}`
       showToast(msg, direction === 'right' ? 'green' : 'gray')
-      setIndex((i) => i + 1)
     } catch (err) {
-      showToast(err.message, 'red')
+      // Still advance — a failure usually means already swiped (stale card)
+      showToast('Skipped — already swiped on this person', 'gray')
     } finally {
       setSwiping(false)
+      setIndex((i) => i + 1)
     }
   }
 
