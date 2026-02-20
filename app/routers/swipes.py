@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select
 
@@ -19,18 +20,6 @@ def swipe_candidate(
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
 
-    existing = db.scalar(
-        select(models.Swipe).where(
-            models.Swipe.user_id == current_user.id,
-            models.Swipe.candidate_id == candidate_id,
-        )
-    )
-    if existing:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="You have already swiped on this candidate",
-        )
-
     swipe = models.Swipe(
         user_id=current_user.id,
         candidate_id=candidate_id,
@@ -50,7 +39,14 @@ def swipe_candidate(
             )
             db.add(matchmaker)
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You have already swiped on this candidate",
+        )
     db.refresh(swipe)
 
     return db.scalar(

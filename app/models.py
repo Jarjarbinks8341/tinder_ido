@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Integer, String, Enum, DateTime, ForeignKey, Text, func
+from sqlalchemy import Column, Integer, String, Enum, DateTime, ForeignKey, Text, UniqueConstraint, func
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -51,7 +51,7 @@ class UserPhoto(Base):
     __tablename__ = "user_photos"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     filename = Column(String(255), nullable=False)
     display_order = Column(Integer, default=0)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
@@ -82,10 +82,13 @@ class Candidate(Base):
 
 class Swipe(Base):
     __tablename__ = "swipes"
+    __table_args__ = (
+        UniqueConstraint("user_id", "candidate_id", name="uq_swipe_user_candidate"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    candidate_id = Column(Integer, ForeignKey("candidates.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    candidate_id = Column(Integer, ForeignKey("candidates.id", ondelete="CASCADE"), nullable=False, index=True)
     direction = Column(Enum(SwipeDirectionEnum), nullable=False)
     swiped_at = Column(DateTime, server_default=func.now(), nullable=False)
 
@@ -111,8 +114,8 @@ class Matchmaker(Base):
     __tablename__ = "matchmakers"
 
     id = Column(Integer, primary_key=True, index=True)
-    agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False)
-    candidate_id = Column(Integer, ForeignKey("candidates.id", ondelete="CASCADE"), nullable=False)
+    agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+    candidate_id = Column(Integer, ForeignKey("candidates.id", ondelete="CASCADE"), nullable=False, index=True)
     status = Column(Enum(MatchmakerStatusEnum), nullable=False, default=MatchmakerStatusEnum.pending)
     contact_notes = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)

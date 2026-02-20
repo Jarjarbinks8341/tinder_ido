@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from app import models, schemas
 from app.dependencies import get_db, get_current_user
@@ -30,16 +30,12 @@ def search_candidates(
     if filters.max_age is not None:
         stmt = stmt.where(models.Candidate.age <= filters.max_age)
 
-    candidates = db.scalars(stmt).all()
-
     if filters.tags:
-        filter_tags = {t.lower().strip() for t in filters.tags}
-        filtered = []
-        for c in candidates:
-            if c.tags:
-                candidate_tags = {t.lower().strip() for t in c.tags.split(",")}
-                if candidate_tags & filter_tags:
-                    filtered.append(c)
-        candidates = filtered
+        tag_conditions = []
+        for tag in filters.tags:
+            t = tag.lower().strip()
+            # Match tag anywhere in comma-separated list
+            tag_conditions.append(models.Candidate.tags.ilike(f"%{t}%"))
+        stmt = stmt.where(or_(*tag_conditions))
 
-    return candidates
+    return db.scalars(stmt).all()

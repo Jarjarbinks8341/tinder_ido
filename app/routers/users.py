@@ -11,6 +11,9 @@ from app.dependencies import get_db, get_current_user
 router = APIRouter(prefix="/users", tags=["users"])
 
 UPLOAD_DIR = "uploads"
+MAX_PHOTOS = 6
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp"}
 
 
 @router.patch("/me", response_model=schemas.UserResponse)
@@ -37,10 +40,10 @@ async def upload_photos(
     current_user: models.User = Depends(get_current_user),
 ):
     existing_count = len(current_user.photos)
-    if existing_count + len(files) > 6:
+    if existing_count + len(files) > MAX_PHOTOS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot exceed 6 photos total (you already have {existing_count})",
+            detail=f"Cannot exceed {MAX_PHOTOS} photos total (you already have {existing_count})",
         )
 
     os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -51,10 +54,20 @@ async def upload_photos(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"File '{file.filename}' is not an image",
             )
-        ext = (file.filename or "jpg").rsplit(".", 1)[-1].lower()
+        ext = (file.filename or "file.jpg").rsplit(".", 1)[-1].lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File extension '.{ext}' not allowed. Use: {', '.join(sorted(ALLOWED_EXTENSIONS))}",
+            )
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File '{file.filename}' exceeds {MAX_FILE_SIZE // (1024*1024)}MB limit",
+            )
         filename = f"user_{current_user.id}_{uuid.uuid4().hex[:8]}.{ext}"
         path = os.path.join(UPLOAD_DIR, filename)
-        content = await file.read()
         with open(path, "wb") as f:
             f.write(content)
 
