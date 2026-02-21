@@ -1,4 +1,4 @@
-const BASE = '/api'
+const BASE = import.meta.env.VITE_API_BASE || '/api'
 
 function getToken() {
   return localStorage.getItem('token')
@@ -50,6 +50,7 @@ export const api = {
   swipe: (candidateId, direction) =>
     request('POST', `/swipes/${candidateId}`, { direction }),
   getSwipeHistory: () => request('GET', '/swipes'),
+  getMatches: () => request('GET', '/swipes/matches'),
   getAgent: () => request('GET', '/agent/me'),
   getMatchmakers: () => request('GET', '/matchmaker'),
 

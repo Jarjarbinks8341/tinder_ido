@@ -51,16 +51,16 @@ export default function HistoryPage() {
                   className="flex items-center gap-4 bg-white rounded-2xl p-3 shadow-sm"
                 >
                   <img
-                    src={swipe.candidate.photo_url || 'https://via.placeholder.com/48'}
-                    alt={swipe.candidate.name}
+                    src={swipe.target_user.photo_url || 'https://via.placeholder.com/48'}
+                    alt={swipe.target_user.name}
                     className="w-12 h-12 rounded-full object-cover"
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-800 truncate">
-                      {swipe.candidate.name}, {swipe.candidate.age}
+                      {swipe.target_user.name}, {swipe.target_user.age}
                     </p>
                     <p className="text-xs text-gray-400 truncate">
-                      {swipe.candidate.tags?.split(',').join(' · ')}
+                      {swipe.target_user.tags?.split(',').join(' · ')}
                     </p>
                   </div>
                   <span

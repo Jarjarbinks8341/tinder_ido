@@ -76,16 +76,16 @@ export default function AgentPage() {
                 className="flex items-center gap-4 bg-white rounded-2xl p-3 shadow-sm"
               >
                 <img
-                  src={mm.candidate.photo_url || 'https://via.placeholder.com/48'}
-                  alt={mm.candidate.name}
+                  src={mm.target_user.photo_url || 'https://via.placeholder.com/48'}
+                  alt={mm.target_user.name}
                   className="w-12 h-12 rounded-full object-cover"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-800 truncate">
-                    {mm.candidate.name}, {mm.candidate.age}
+                    {mm.target_user.name}, {mm.target_user.age}
                   </p>
                   <p className="text-xs text-gray-400 truncate">
-                    {mm.candidate.location}
+                    {mm.target_user.location}
                   </p>
                   {mm.contact_notes && (
                     <p className="text-xs text-gray-500 mt-0.5 italic">{mm.contact_notes}</p>

@@ -32,11 +32,9 @@ def get_matchmakers(
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found for this user")
 
-    matchmakers = db.scalars(
+    return db.scalars(
         select(models.Matchmaker)
-        .options(joinedload(models.Matchmaker.candidate))
+        .options(joinedload(models.Matchmaker.target_user).joinedload(models.User.photos))
         .where(models.Matchmaker.agent_id == agent.id)
         .order_by(models.Matchmaker.created_at.desc())
-    ).all()
-
-    return matchmakers
+    ).unique().all()

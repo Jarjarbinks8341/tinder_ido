@@ -1,6 +1,5 @@
 import os
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter
@@ -20,14 +19,7 @@ app = FastAPI(
     title="Tinder IDO API",
     version="0.1.0",
     description="MVP matchmaking backend with Agent/Matchmaker placeholders",
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:5174").split(","),
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    root_path=os.getenv("ROOT_PATH", ""),
 )
 
 app.state.limiter = limiter

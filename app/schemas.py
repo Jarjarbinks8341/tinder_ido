@@ -1,7 +1,10 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
-from app.models import GenderEnum, SwipeDirectionEnum, AgentStatusEnum, MatchmakerStatusEnum
+from pydantic import BaseModel, EmailStr, field_validator, computed_field, ConfigDict
+from app.models import (
+    GenderEnum, SwipeDirectionEnum, AgentStatusEnum, MatchmakerStatusEnum,
+    IncomeRangeEnum, EducationEnum, IndustryEnum,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -17,6 +20,9 @@ class UserRegisterRequest(BaseModel):
     location: Optional[str] = None
     bio: Optional[str] = None
     tags: Optional[str] = None
+    income_range: Optional[IncomeRangeEnum] = None
+    education: Optional[EducationEnum] = None
+    industry: Optional[IndustryEnum] = None
 
     @field_validator("age")
     @classmethod
@@ -62,6 +68,9 @@ class UserResponse(BaseModel):
     location: Optional[str] = None
     bio: Optional[str] = None
     tags: Optional[str] = None
+    income_range: Optional[IncomeRangeEnum] = None
+    education: Optional[EducationEnum] = None
+    industry: Optional[IndustryEnum] = None
     photos: list[UserPhotoResponse] = []
     created_at: datetime
 
@@ -70,10 +79,38 @@ class UserUpdateRequest(BaseModel):
     location: Optional[str] = None
     bio: Optional[str] = None
     tags: Optional[str] = None
+    income_range: Optional[IncomeRangeEnum] = None
+    education: Optional[EducationEnum] = None
+    industry: Optional[IndustryEnum] = None
 
 
 # ---------------------------------------------------------------------------
-# Candidate
+# Profile (public view — no email or password exposed)
+# ---------------------------------------------------------------------------
+
+class ProfileResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    gender: GenderEnum
+    age: int
+    location: Optional[str] = None
+    bio: Optional[str] = None
+    tags: Optional[str] = None
+    income_range: Optional[IncomeRangeEnum] = None
+    education: Optional[EducationEnum] = None
+    industry: Optional[IndustryEnum] = None
+    photos: list[UserPhotoResponse] = []
+
+    @computed_field
+    @property
+    def photo_url(self) -> Optional[str]:
+        return self.photos[0].url if self.photos else None
+
+
+# ---------------------------------------------------------------------------
+# Candidate search (browse other users)
 # ---------------------------------------------------------------------------
 
 class CandidateSearchRequest(BaseModel):
@@ -81,6 +118,10 @@ class CandidateSearchRequest(BaseModel):
     min_age: Optional[int] = None
     max_age: Optional[int] = None
     tags: Optional[list[str]] = None
+    location: Optional[str] = None
+    education: Optional[EducationEnum] = None
+    industry: Optional[IndustryEnum] = None
+    income_range: Optional[IncomeRangeEnum] = None
 
     @field_validator("min_age", "max_age")
     @classmethod
@@ -88,19 +129,6 @@ class CandidateSearchRequest(BaseModel):
         if v is not None and not (18 <= v <= 100):
             raise ValueError("Age filter must be between 18 and 100")
         return v
-
-
-class CandidateResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    name: str
-    gender: GenderEnum
-    age: int
-    location: Optional[str]
-    bio: Optional[str]
-    tags: Optional[str]
-    photo_url: Optional[str]
 
 
 # ---------------------------------------------------------------------------
@@ -115,10 +143,25 @@ class SwipeResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    candidate_id: int
+    target_user_id: int
     direction: SwipeDirectionEnum
     swiped_at: datetime
-    candidate: CandidateResponse
+    target_user: ProfileResponse
+
+
+# ---------------------------------------------------------------------------
+# Match
+# ---------------------------------------------------------------------------
+
+class MatchResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user1_id: int
+    user2_id: int
+    matched_at: datetime
+    user1: ProfileResponse
+    user2: ProfileResponse
 
 
 # ---------------------------------------------------------------------------
@@ -145,8 +188,8 @@ class MatchmakerResponse(BaseModel):
 
     id: int
     agent_id: int
-    candidate_id: int
+    target_user_id: int
     status: MatchmakerStatusEnum
     contact_notes: Optional[str]
     created_at: datetime
-    candidate: CandidateResponse
+    target_user: ProfileResponse

@@ -15,6 +15,39 @@ class SwipeDirectionEnum(str, enum.Enum):
     right = "right"
 
 
+class IncomeRangeEnum(str, enum.Enum):
+    prefer_not_to_say = "prefer_not_to_say"
+    under_50k = "0-50K"
+    k50_100 = "50K-100K"
+    k100_150 = "100K-150K"
+    k150_200 = "150K-200K"
+    over_200k = "200K+"
+
+
+class EducationEnum(str, enum.Enum):
+    high_school = "high_school"
+    associate = "associate"
+    bachelor = "bachelor"
+    master = "master"
+    phd = "phd"
+    other = "other"
+
+
+class IndustryEnum(str, enum.Enum):
+    engineering = "engineering"
+    education = "education"
+    financial_services = "financial_services"
+    healthcare = "healthcare"
+    legal = "legal"
+    marketing = "marketing"
+    real_estate = "real_estate"
+    technology = "technology"
+    hospitality = "hospitality"
+    government = "government"
+    arts_entertainment = "arts_entertainment"
+    other = "other"
+
+
 class AgentStatusEnum(str, enum.Enum):
     active = "active"
     inactive = "inactive"
@@ -40,11 +73,20 @@ class User(Base):
     location = Column(String(200), nullable=True)
     bio = Column(Text, nullable=True)
     tags = Column(Text, nullable=True)  # comma-separated
+    income_range = Column(Enum(IncomeRangeEnum), nullable=True)
+    education = Column(Enum(EducationEnum), nullable=True)
+    industry = Column(Enum(IndustryEnum), nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
 
-    swipes = relationship("Swipe", back_populates="user", cascade="all, delete-orphan")
+    swipes_made = relationship(
+        "Swipe", foreign_keys="[Swipe.user_id]",
+        back_populates="user", cascade="all, delete-orphan",
+    )
     agent = relationship("Agent", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    photos = relationship("UserPhoto", back_populates="user", cascade="all, delete-orphan", order_by="UserPhoto.display_order")
+    photos = relationship(
+        "UserPhoto", back_populates="user",
+        cascade="all, delete-orphan", order_by="UserPhoto.display_order",
+    )
 
 
 class UserPhoto(Base):
@@ -63,37 +105,35 @@ class UserPhoto(Base):
         return f"/uploads/{self.filename}"
 
 
-class Candidate(Base):
-    __tablename__ = "candidates"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False)
-    gender = Column(Enum(GenderEnum), nullable=False)
-    age = Column(Integer, nullable=False)
-    location = Column(String(200), nullable=True)
-    bio = Column(Text, nullable=True)
-    tags = Column(Text, nullable=True)  # comma-separated, e.g. "music,hiking,coffee"
-    photo_url = Column(String(500), nullable=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-
-    swipes = relationship("Swipe", back_populates="candidate")
-    matchmakers = relationship("Matchmaker", back_populates="candidate")
-
-
 class Swipe(Base):
     __tablename__ = "swipes"
     __table_args__ = (
-        UniqueConstraint("user_id", "candidate_id", name="uq_swipe_user_candidate"),
+        UniqueConstraint("user_id", "target_user_id", name="uq_swipe_user_target"),
     )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    candidate_id = Column(Integer, ForeignKey("candidates.id", ondelete="CASCADE"), nullable=False, index=True)
+    target_user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     direction = Column(Enum(SwipeDirectionEnum), nullable=False)
     swiped_at = Column(DateTime, server_default=func.now(), nullable=False)
 
-    user = relationship("User", back_populates="swipes")
-    candidate = relationship("Candidate", back_populates="swipes")
+    user = relationship("User", foreign_keys=[user_id], back_populates="swipes_made")
+    target_user = relationship("User", foreign_keys=[target_user_id])
+
+
+class Match(Base):
+    __tablename__ = "matches"
+    __table_args__ = (
+        UniqueConstraint("user1_id", "user2_id", name="uq_match_users"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    user1_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user2_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    matched_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    user1 = relationship("User", foreign_keys=[user1_id])
+    user2 = relationship("User", foreign_keys=[user2_id])
 
 
 class Agent(Base):
@@ -115,10 +155,10 @@ class Matchmaker(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
-    candidate_id = Column(Integer, ForeignKey("candidates.id", ondelete="CASCADE"), nullable=False, index=True)
+    target_user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     status = Column(Enum(MatchmakerStatusEnum), nullable=False, default=MatchmakerStatusEnum.pending)
     contact_notes = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
 
     agent = relationship("Agent", back_populates="matchmakers")
-    candidate = relationship("Candidate", back_populates="matchmakers")
+    target_user = relationship("User", foreign_keys=[target_user_id])
