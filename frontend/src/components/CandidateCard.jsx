@@ -1,3 +1,27 @@
+const EDUCATION_LABELS = {
+  high_school: 'High School',
+  associate: 'Associate',
+  bachelor: "Bachelor's",
+  master: "Master's",
+  phd: 'PhD',
+  other: 'Other',
+}
+
+const INDUSTRY_LABELS = {
+  engineering: 'Engineering',
+  education: 'Education',
+  financial_services: 'Financial Services',
+  healthcare: 'Healthcare',
+  legal: 'Legal',
+  marketing: 'Marketing',
+  real_estate: 'Real Estate',
+  technology: 'Technology',
+  hospitality: 'Hospitality',
+  government: 'Government',
+  arts_entertainment: 'Arts & Entertainment',
+  other: 'Other',
+}
+
 export default function CandidateCard({ candidate, onSwipe, swiping }) {
   const tags = candidate.tags ? candidate.tags.split(',') : []
 
@@ -32,6 +56,25 @@ export default function CandidateCard({ candidate, onSwipe, swiping }) {
       <div className="p-4 space-y-3">
         {candidate.bio && (
           <p className="text-gray-600 text-sm leading-relaxed">{candidate.bio}</p>
+        )}
+        {(candidate.education || candidate.industry || candidate.income_range) && (
+          <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+            {candidate.education && (
+              <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full">
+                {EDUCATION_LABELS[candidate.education] || candidate.education}
+              </span>
+            )}
+            {candidate.industry && (
+              <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded-full">
+                {INDUSTRY_LABELS[candidate.industry] || candidate.industry}
+              </span>
+            )}
+            {candidate.income_range && candidate.income_range !== 'prefer_not_to_say' && (
+              <span className="px-2 py-0.5 bg-green-50 text-green-600 rounded-full">
+                ${candidate.income_range}
+              </span>
+            )}
+          </div>
         )}
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1">

@@ -11,6 +11,7 @@ export default function AuthPage() {
   const [form, setForm] = useState({
     email: '', password: '', name: '', gender: 'male', age: '',
     location: '', bio: '', tags: '',
+    income_range: '', education: '', industry: '',
   })
 
   function set(field) {
@@ -28,6 +29,9 @@ export default function AuthPage() {
         if (!payload.location) delete payload.location
         if (!payload.bio) delete payload.bio
         if (!payload.tags) delete payload.tags
+        if (!payload.income_range) delete payload.income_range
+        if (!payload.education) delete payload.education
+        if (!payload.industry) delete payload.industry
         await api.register(payload)
       }
       const { access_token } = await api.login(form.email, form.password)
@@ -107,6 +111,38 @@ export default function AuthPage() {
                 value={form.tags}
                 onChange={set('tags')}
               />
+              <select className={inputClass} value={form.income_range} onChange={set('income_range')}>
+                <option value="">Income range (optional)</option>
+                <option value="0-50K">$0 – $50K</option>
+                <option value="50K-100K">$50K – $100K</option>
+                <option value="100K-150K">$100K – $150K</option>
+                <option value="150K-200K">$150K – $200K</option>
+                <option value="200K+">$200K+</option>
+              </select>
+              <select className={inputClass} value={form.education} onChange={set('education')}>
+                <option value="">Education (optional)</option>
+                <option value="high_school">High School</option>
+                <option value="associate">Associate Degree</option>
+                <option value="bachelor">Bachelor's Degree</option>
+                <option value="master">Master's Degree</option>
+                <option value="phd">PhD / Doctorate</option>
+                <option value="other">Other</option>
+              </select>
+              <select className={inputClass} value={form.industry} onChange={set('industry')}>
+                <option value="">Industry (optional)</option>
+                <option value="engineering">Engineering</option>
+                <option value="education">Education</option>
+                <option value="financial_services">Financial Services</option>
+                <option value="healthcare">Healthcare</option>
+                <option value="legal">Legal</option>
+                <option value="marketing">Marketing</option>
+                <option value="real_estate">Real Estate</option>
+                <option value="technology">Technology</option>
+                <option value="hospitality">Hospitality</option>
+                <option value="government">Government</option>
+                <option value="arts_entertainment">Arts & Entertainment</option>
+                <option value="other">Other</option>
+              </select>
             </>
           )}
           <input

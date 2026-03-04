@@ -5,12 +5,16 @@ Run: python seed_data.py
 
 import sys
 import os
+import secrets
+import urllib.request
 
 sys.path.insert(0, os.path.dirname(__file__))
 
 from app.database import SessionLocal, engine, Base
-from app.models import User, Agent, GenderEnum, IncomeRangeEnum, EducationEnum, IndustryEnum, AgentStatusEnum
+from app.models import User, UserPhoto, Agent, GenderEnum, IncomeRangeEnum, EducationEnum, IndustryEnum, AgentStatusEnum
 from app.auth import hash_password
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 
 Base.metadata.create_all(bind=engine)
 
@@ -262,6 +266,25 @@ USERS = [
 ]
 
 
+def download_photo(user_id: int, gender: str):
+    """Download a fake-person portrait photo from randomuser.me."""
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    filename = f"user_{user_id}_{secrets.token_hex(4)}.jpg"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+    try:
+        api_url = f"https://randomuser.me/api/?gender={gender}&nat=au"
+        req = urllib.request.Request(api_url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req) as resp:
+            import json
+            data = json.loads(resp.read())
+            photo_url = data["results"][0]["picture"]["large"]
+        urllib.request.urlretrieve(photo_url, filepath)
+        return filename
+    except Exception as e:
+        print(f"  Warning: could not download photo for user {user_id}: {e}")
+        return None
+
+
 def seed():
     db = SessionLocal()
     try:
@@ -279,9 +302,18 @@ def seed():
                 name=f"{data['name']}'s Agent",
                 status=AgentStatusEnum.pending,
             ))
+            # Download and attach a profile photo
+            print(f"  Downloading photo for {data['name']}...")
+            filename = download_photo(user.id, data["gender"].value)
+            if filename:
+                db.add(UserPhoto(
+                    user_id=user.id,
+                    filename=filename,
+                    display_order=0,
+                ))
 
         db.commit()
-        print(f"Seeded {len(USERS)} users with agents. Password for all: '{SEED_PASSWORD}'")
+        print(f"Seeded {len(USERS)} users with agents and photos. Password for all: '{SEED_PASSWORD}'")
     except Exception as e:
         db.rollback()
         print(f"Seeding failed: {e}")

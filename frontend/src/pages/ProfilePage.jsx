@@ -7,7 +7,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef(null)
 
   const [user, setUser] = useState(null)
-  const [form, setForm] = useState({ location: '', bio: '', tags: '' })
+  const [form, setForm] = useState({ location: '', bio: '', tags: '', income_range: '', education: '', industry: '' })
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -20,6 +20,9 @@ export default function ProfilePage() {
         location: me.location || '',
         bio: me.bio || '',
         tags: me.tags || '',
+        income_range: me.income_range || '',
+        education: me.education || '',
+        industry: me.industry || '',
       })
     })
   }, [])
@@ -38,6 +41,9 @@ export default function ProfilePage() {
         location: form.location || null,
         bio: form.bio || null,
         tags: form.tags || null,
+        income_range: form.income_range || null,
+        education: form.education || null,
+        industry: form.industry || null,
       })
       setUser(updated)
       setSuccess('Profile saved!')
@@ -117,6 +123,47 @@ export default function ProfilePage() {
             value={form.tags}
             onChange={set('tags')}
           />
+
+          <div className="grid grid-cols-1 gap-3 pt-2">
+            <label className="text-xs text-gray-500 font-medium -mb-2">Income Range</label>
+            <select className={inputClass} value={form.income_range} onChange={set('income_range')}>
+              <option value="">Prefer not to say</option>
+              <option value="0-50K">$0 – $50K</option>
+              <option value="50K-100K">$50K – $100K</option>
+              <option value="100K-150K">$100K – $150K</option>
+              <option value="150K-200K">$150K – $200K</option>
+              <option value="200K+">$200K+</option>
+            </select>
+
+            <label className="text-xs text-gray-500 font-medium -mb-2">Education</label>
+            <select className={inputClass} value={form.education} onChange={set('education')}>
+              <option value="">Select education</option>
+              <option value="high_school">High School</option>
+              <option value="associate">Associate Degree</option>
+              <option value="bachelor">Bachelor's Degree</option>
+              <option value="master">Master's Degree</option>
+              <option value="phd">PhD / Doctorate</option>
+              <option value="other">Other</option>
+            </select>
+
+            <label className="text-xs text-gray-500 font-medium -mb-2">Industry</label>
+            <select className={inputClass} value={form.industry} onChange={set('industry')}>
+              <option value="">Select industry</option>
+              <option value="engineering">Engineering</option>
+              <option value="education">Education</option>
+              <option value="financial_services">Financial Services</option>
+              <option value="healthcare">Healthcare</option>
+              <option value="legal">Legal</option>
+              <option value="marketing">Marketing</option>
+              <option value="real_estate">Real Estate</option>
+              <option value="technology">Technology</option>
+              <option value="hospitality">Hospitality</option>
+              <option value="government">Government</option>
+              <option value="arts_entertainment">Arts & Entertainment</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
           {success && <p className="text-green-500 text-sm">{success}</p>}
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button

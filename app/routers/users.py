@@ -28,6 +28,12 @@ def update_me(
         current_user.bio = payload.bio
     if payload.tags is not None:
         current_user.tags = payload.tags
+    if payload.income_range is not None:
+        current_user.income_range = payload.income_range
+    if payload.education is not None:
+        current_user.education = payload.education
+    if payload.industry is not None:
+        current_user.industry = payload.industry
     db.commit()
     db.refresh(current_user)
     return current_user
